@@ -1,0 +1,150 @@
+import 'package:flutter/material.dart';
+import 'package:positioned_tap_detector_2/positioned_tap_detector_2.dart';
+import 'dart:math';
+import 'dart:async';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Moving Dot',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const DotScreen(),
+    );
+  }
+}
+
+class DotScreen extends StatefulWidget {
+  const DotScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DotScreen> createState() => _DotScreenState();
+}
+
+class _DotScreenState extends State<DotScreen> {
+  final double _circleSize = 30;
+  Offset? _circlePosition;
+  double _slope = 0;
+  double _xDistance = 0;
+  int _tapCount = 0;
+  double xStart = 0, yStart = 0;
+
+  void moveRight(double slope, int i) {
+    Timer.periodic(const Duration(milliseconds: 8), (timer) {
+      if (_tapCount != i) {
+        timer.cancel();
+//Stop moving in this direction when the screen is tapped again
+      }
+      _xDistance = sqrt(1 / (1 + pow(slope, 2)));
+      setState(() {
+        _circlePosition = Offset(_circlePosition!.dx + _xDistance,
+            _circlePosition!.dy - slope * _xDistance);
+      });
+
+//if the ball bounces off the top or bottom
+
+      if (_circlePosition!.dy < 0 ||
+          _circlePosition!.dy >
+              MediaQuery.of(context).size.height - _circleSize) {
+        timer.cancel();
+        moveRight(-slope, i);
+      }
+//if the ball bounces off the right
+      if (_circlePosition!.dx >
+          MediaQuery.of(context).size.width - _circleSize) {
+        timer.cancel();
+        moveLeft(-slope, i);
+      }
+    });
+  }
+
+  void moveLeft(double slope, int i) {
+    Timer.periodic(const Duration(milliseconds: 8), (timer) {
+      if (_tapCount != i) {
+        timer.cancel();
+//Stop moving in this direction when the screen is tapped again
+
+      }
+      _xDistance = sqrt(1 / (1 + pow(slope, 2)));
+      setState(() {
+        _circlePosition = Offset(_circlePosition!.dx - _xDistance,
+            _circlePosition!.dy + slope * _xDistance);
+      });
+
+//if the ball bounces off the top or bottom
+      if (_circlePosition!.dy < 0 ||
+          _circlePosition!.dy >
+              MediaQuery.of(context).size.height - _circleSize) {
+        timer.cancel();
+        moveLeft(-slope, i);
+      }
+//if the ball bounces off the left
+      if (_circlePosition!.dx < 0) {
+        timer.cancel();
+        moveRight(-slope, i);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _circlePosition ??= Offset(
+        (MediaQuery.of(context).size.width - _circleSize) / 2,
+        (MediaQuery.of(context).size.height - _circleSize) / 2);
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          Listener(
+            onPointerDown: ((event) {
+              print('pointer down dx ${event.position.dx}');
+              print('pointer down dy ${event.position.dy}');
+              xStart = event.position.dx;
+              yStart = event.position.dy;
+            }),
+            onPointerUp: ((event) {
+              print('pointer up dx ${event.position.dx}');
+              print('pointer up dy ${event.position.dy}');
+              _tapCount++;
+              _slope =
+                  (-event.position.dy + yStart) / (event.position.dx - xStart);
+              if (event.position.dx < xStart) {
+                moveLeft(_slope, _tapCount);
+              }
+              if (event.position.dx > xStart) {
+                moveRight(_slope, _tapCount);
+              }
+            }),
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              width: MediaQuery.of(context).size.width,
+            ),
+          ),
+          GestureDetector(
+            onta
+          ),
+          Positioned(
+            left: _circlePosition!.dx,
+            top: _circlePosition!.dy,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
+              ),
+              height: _circleSize,
+              width: _circleSize,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
